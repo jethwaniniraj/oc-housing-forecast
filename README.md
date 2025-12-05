@@ -22,3 +22,10 @@ print("R2 Score:", r2_score(y_test, y_pred))
 
 # Example prediction – change values as needed for scenario analysis
 print("Predicted Median Price (100k's):", model.predict([[9.0, 20, 6]]))
+
+import matplotlib.pyplot as plt
+plt.scatter(y_test, y_pred, alpha=0.5)
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--', lw=2) # Plots a red "perfect fit" line
+plt.xlabel("Actual Price"); plt.ylabel("Predicted Price")
+plt.title("Actual vs. Predicted Housing Prices (in $100k)")
+plt.show()
