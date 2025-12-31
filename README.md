@@ -1,6 +1,5 @@
-# 3:46 PM
+# 10:50 am Dec 31
 import pandas as pd
-# IMPORT THE NEW MODEL!
 from sklearn.ensemble import RandomForestRegressor 
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
@@ -51,34 +50,92 @@ plt.title("Top 5 Feature Importances")
 plt.xlabel("Importance Score")
 # plt.show() 
 # --- NEW CODE BLOCK ENDS HERE ---
+
+# ----------------------------------------------------------------------------------
+#  <<<<<<<<<< PASTE THE NEW, UPDATED BLOCK HERE >>>>>>>>>>
+# ----------------------------------------------------------------------------------
+
 # --- NEW CODE BLOCK FOR INTERACTIVE PREDICTION STARTS HERE ---
 
-print("\n--- Interactive Scenario Analysis ---")
+print("\n--- Interactive Scenario Analysis (Orange County ZIP-Aware) ---")
+
+# --- ZIP CODE UTILITY FUNCTION ---
+# This function maps Orange County ZIP codes to approximate Latitude and Longitude.
+# The original dataset does not have ZIP codes, so this is a workaround using coordinates.
+def get_zip_coords(zip_code):
+    """Returns approximate (Latitude, Longitude) for a given Orange County ZIP."""
+    # Source: Approximate coordinates from public domain geographical data
+    zip_coords = {
+        '92618': (33.66, -117.73),  # Irvine (Example)
+        '92602': (33.70, -117.82),  # Irvine (Another Example)
+        '92660': (33.62, -117.93),  # Newport Beach (Example)
+        '92672': (33.43, -117.58),  # San Clemente (Example)
+        # Add more ZIP codes and their coordinates here as needed!
+    }
+    return zip_coords.get(zip_code)
 
 # THE COLUMN MODEL IS CRITICAL FOR THE MODEL!
 # Order: MedInc, HouseAge, AveRooms, AveBedrms, Population, AveOccup, Latitude, Longitude
-print("Enter 8 values separated by commas in this order:")
-print("MedInc, HouseAge, AveRooms, AveBedrms, Population, AveOccup, Latitude, Longitude")
+print("Enter the characteristics for the property, or start with a supported ZIP code.")
+print("Supported ZIPs for quick-fill: 92618 (Irvine), 92602 (Irvine), 92660 (Newport), 92672 (San Clemente)")
+print("-" * 50)
+print("1. Enter an Orange County ZIP Code (e.g., 92618) OR hit ENTER to input all 8 values manually.")
+user_zip = input("Enter ZIP Code: ").strip()
+
+latitude = None
+longitude = None
+
+if user_zip.isdigit() and len(user_zip) == 5:
+    coords = get_zip_coords(user_zip)
+    if coords:
+        latitude, longitude = coords
+        print(f"✅ Found coordinates for ZIP {user_zip}: Lat={latitude}, Lon={longitude}")
+    else:
+        print(f"⚠️ ZIP Code {user_zip} not found in the list. Proceeding to manual entry.")
+        
+# --- MANUAL INPUT SECTION ---
+print("\n2. Enter the remaining 6 (or all 8) values separated by commas in this order:")
+print("MedInc, HouseAge, AveRooms, AveBedrms, Population, AveOccup")
+if latitude is None:
+    # If no ZIP was entered/found, we need all 8, so we ask for the remaining two as well.
+    print("... and don't forget Latitude, Longitude")
+else:
+    print(f"**Lat and Lon will be automatically set to: {latitude}, {longitude}**")
 
 try:
     # GET ALL INPUTS AS A SINGLE STRING
-    user_input_str = input("Enter 8 values: ")
+    user_input_str = input("Enter values: ")
     # Convert the comma-separated string into a list of floats
-    # Note: The model expects the data as a 2D array: [[v1, v2, ...]]
-    user_values = [[float(x.strip()) for x in user_input_str.split(',')]]
+    input_values = [float(x.strip()) for x in user_input_str.split(',')]
     
-    # CHECK IF I HAVE EXACTLY 8 VALUES
-    if len(user_values[0]) == 8:
+    # Check if the user entered 6 values (for ZIP mode) or 8 values (for manual mode)
+    if latitude is not None and len(input_values) == 6:
+        # ZIP Mode: Append the coordinates we found
+        input_values.extend([latitude, longitude])
+        user_values = [input_values]
+    elif latitude is None and len(input_values) == 8:
+        # Manual Mode: Use the 8 values provided
+        user_values = [input_values]
+    else:
+        # Invalid input count
+        expected_count = 6 if latitude is not None else 8
+        print(f"Error: You must enter exactly {expected_count} comma-separated values for your chosen mode.")
+        user_values = None
+
+    if user_values is not None:
         # Predict the price for the user's input
         new_pred = model.predict(user_values)
         print(f"\n✅ Predicted Median House Price: ${new_pred[0]*100000:,.2f}")
-    else:
-        print("Error: You must enter exactly 8 comma-separated values.")
 
 except ValueError:
-    print("Error: Please ensure all inputs are valid numbers.")
+    print("Error: Please ensure all inputs are valid numbers and you use commas to separate them.")
 
 # --- NEW CODE BLOCK ENDS HERE ---
+
+# ----------------------------------------------------------------------------------
+#  <<<<<<<<<< END OF REPLACEMENT >>>>>>>>>>
+# ----------------------------------------------------------------------------------
+
 # 7. Visualize
 plt.scatter(y_test, y_pred, alpha=0.5)
 plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--', lw=2)
