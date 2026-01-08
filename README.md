@@ -146,26 +146,7 @@ plt.title("Actual vs. Predicted (Random Forest Regressor)")
 
 # Jan 5, 8:39pm
 # --- ZIP CODE LOCATOR FEATURE ----
-# --- CONFIGURATION FOR HISTORICAL DATA RETRIEVAL ---
-# NOTE: This uses an external API and is separate from the sklearn model.
-# You must obtain a real API Key and Endpoint from a real estate data provider.
-import requests
-import pandas as pd
-from typing import Optional, Dict, Any
 
-# Replace with your actual credentials!
-REAL_ESTATE_API_ENDPOINT = "YOUR_API_ENDPOINT_FOR_HISTORICAL_ZIP_DATA" 
-REAL_ESTATE_API_KEY = "YOUR_SECRET_API_KEY"
-def fetch_past_housing_prices(zip_code: str) -> Optional[pd.DataFrame]:
-    """
-    Fetches historical housing price data for a given ZIP code from a real estate API.
-    
-    Args:
-        zip_code: The 5-digit US ZIP code to query.
-
-    Returns:
-        A pandas DataFrame of the historical prices, or None if the request fails.
-    """
     print(f"\n--- Retrieving Historical Data for ZIP Code: {zip_code} ---")
     
     # Define parameters/headers based on your API's documentation
