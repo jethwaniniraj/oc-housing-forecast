@@ -143,3 +143,98 @@ plt.xlabel("Actual Price")
 plt.ylabel("Predicted Price")
 plt.title("Actual vs. Predicted (Random Forest Regressor)")
 # plt.show()
+
+# --- ZIP CODE LOCATOR FEATURE ----
+# --- CONFIGURATION FOR HISTORICAL DATA RETRIEVAL ---
+# NOTE: This uses an external API and is separate from the sklearn model.
+# You must obtain a real API Key and Endpoint from a real estate data provider.
+import requests
+import pandas as pd
+from typing import Optional, Dict, Any
+
+# Replace with your actual credentials!
+REAL_ESTATE_API_ENDPOINT = "YOUR_API_ENDPOINT_FOR_HISTORICAL_ZIP_DATA" 
+REAL_ESTATE_API_KEY = "YOUR_SECRET_API_KEY"
+def fetch_past_housing_prices(zip_code: str) -> Optional[pd.DataFrame]:
+    """
+    Fetches historical housing price data for a given ZIP code from a real estate API.
+    
+    Args:
+        zip_code: The 5-digit US ZIP code to query.
+
+    Returns:
+        A pandas DataFrame of the historical prices, or None if the request fails.
+    """
+    print(f"\n--- Retrieving Historical Data for ZIP Code: {zip_code} ---")
+    
+    # Define parameters/headers based on your API's documentation
+    params = {
+        "zipcode": zip_code,
+        "api_key": REAL_ESTATE_API_KEY,  # Example: API key in URL parameters
+        "data_type": "median_sale_price_monthly" # Example: Specify data type
+    }
+    
+    # Some APIs use headers for authentication instead of params:
+    # headers = {"Authorization": f"Bearer {REAL_ESTATE_API_KEY}"}
+
+    try:
+        # Send the GET request to the external API
+        response = requests.get(url=REAL_ESTATE_API_ENDPOINT, params=params)
+        response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
+        
+        data: Dict[str, Any] = response.json()
+        
+        # **CRITICAL STEP:** Modify this line based on how your API nests the data!
+        # This assumes the historical prices are in a list under the key 'time_series'.
+        historical_records = data.get("time_series", [])
+        
+        if not historical_records:
+            print(f"⚠️ No historical price data found for ZIP Code {zip_code}.")
+            return None
+        
+        # Convert the records into a DataFrame
+        df = pd.DataFrame(historical_records)
+        
+        # Standardize the output columns (modify as needed for your API's column names)
+        # Assuming the API returns columns like 'date' and 'price'
+        df = df.rename(columns={'date': 'Month/Year', 'price': 'Median Sale Price ($)'})
+        
+        return df[['Month/Year', 'Median Sale Price ($)']].head(12) # Show last 12 months
+
+    except requests.exceptions.RequestException as e:
+        print(f"❌ API Error: Could not fetch data. Check endpoint and key. Error: {e}")
+        return None
+    except Exception as e:
+        print(f"❌ An unexpected error occurred during processing: {e}")
+        return None
+    
+    # --- RUNNING THE FEATURE ---
+if __name__ == "__main__":
+    # 1. Get User Input
+    user_zip = input("Enter the ZIP Code to get **past** housing prices (e.g., 92618): ").strip()
+
+    if user_zip.isdigit() and len(user_zip) == 5:
+        # 2. Call the Function
+        price_history_df = fetch_past_housing_prices(user_zip)
+        
+        # 3. Display the Results
+        if price_history_df is not None:
+            print("\n✅ Past 12 Months Housing Price History:")
+            print(price_history_df.to_string(index=False)) # Display the table neatly
+            
+            # 
+            # Optional: Visualize the trend
+            plt.figure(figsize=(10, 6))
+            plt.plot(pd.to_datetime(price_history_df['Month/Year']), 
+                     price_history_df['Median Sale Price ($)'], 
+                     marker='o', linestyle='-')
+            plt.title(f"Median Sale Price Trend for ZIP {user_zip}")
+            plt.xlabel("Date")
+            plt.ylabel("Price ($)")
+            plt.grid(True)
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            plt.show()
+
+    else:
+        print("Invalid ZIP code entered.")
